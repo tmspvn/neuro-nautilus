@@ -11,6 +11,7 @@ Requirements:
 3. Python [imageio, numpy, nibabel, scipy.ndimage,matplotlib]
 4. docker freesurfer/synthstrip
 
+jljljljl
 
 
 
