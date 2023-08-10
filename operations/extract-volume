@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# extract volume
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+DIR="$(dirname "${MAPFILE[0]}")"
+nvol=$(fslnvols ${MAPFILE[0]})
+vol=$(zenity --entry --title="Extract volume" --text="Size: 0-$(($nvol-1)) \n Volume index:")
+fslroi ${MAPFILE[0]} $DIR/vol.$vol.nii.gz 0 -1 0 -1 0 -1 $vol 1
+notify-send "Extracting"
+if test -f "$DIR/vol.$vol.nii.gz"; then
+    notify-send "Vol $vol extracted."
+else
+    notify-send "Volume extraction error"
+fi
+
+
+

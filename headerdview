@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Quick nifti header visualaizer
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+xterm -ls -xrm 'XTerm*selectToClipboard: true'  -hold -T $(basename "${MAPFILE[0]}") -e bash -c "fslhd ${MAPFILE[0]}"
+
+

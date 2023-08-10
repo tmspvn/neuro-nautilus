@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Substract two niftis, first minus second selected and save it as delta.nii.gz
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+DIR="$(dirname "${MAPFILE[0]}")"
+
+fslmaths ${MAPFILE[0]} -sub ${MAPFILE[1]} ${DIR}/delta.nii.gz
+
+if test -f "${DIR}/delta.nii.gz"; then
+    notify-send "Done: delta.nii.gz"
+else
+    notify-send "Substraction error"
+fi
+

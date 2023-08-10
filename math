@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# quick math between 2 images
+#
+
+readarray -t <<< ${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path=$(dirname "${MAPFILE[0]}")
+file=$(basename "${MAPFILE[0]}")
+
+if [[ $file == *.nii ]]
+then
+    outname="${file/.nii/"_$op.nii"}"
+else
+    outname="${file/.nii.gz/"_$op.nii.gz"}"
+fi
+
+# built input python list from selected files & remove last empty element
+unset MAPFILE[-1]
+printf -v FILESET " %s" "${MAPFILE[@]}"
+CHARSET=({a..z})
+# loop in the array and ad dprefix for ID
+## now loop through the above array
+for i in "${!MAPFILE[@]}"; do
+	path=$(dirname "${MAPFILE[$i]}")
+	file=$(basename "${MAPFILE[$i]}")
+	MAPFILE[$i]="\n\t${CHARSET[$i]} =  ${file}"
+done
+assigned=${MAPFILE[@]}
+
+printf -v finaltext "%s\n" "Input formula in python-numpy style using letters as placeholders for the files: \n\n${assigned[@]}"
+exprs=$(zenity \
+	--forms \
+	--title="Math operation" \
+	--text="$finaltext" \
+	--add-entry="Numpy expression" \
+	--add-entry="Save as" \
+	)
+readarray -d "|" -t <<< ${exprs}
+exprs=${MAPFILE[0]}
+outname=${MAPFILE[1]}
+if [ -z $outname ]; then outname="result.nii.gz"; fi
+	
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+python3 $SCRIPT_DIR/lib/neuronautilus_evalexprs.py -ex $exprs -o ${path}/$outname -vars $FILESET
+
+if test -f "${path}/$outname"; then
+    notify-send "Done: $outname"
+else
+    notify-send "math error"
+fi
+
+

@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# make a mask from a nifti, > 0
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path=$(dirname "${MAPFILE[0]}")
+file=$(basename "${MAPFILE[0]}")
+if [[ $file == *.nii ]]
+then
+    outname="${file/.nii/"_mask.nii.gz"}"
+else
+    outname="${file/.nii.gz/"_mask.nii.gz"}"
+fi
+
+fslmaths ${MAPFILE[0]} -nan -bin ${path}/${outname}
+
+if test -f "${path}/${outname}"; then
+    notify-send "Done: $outname"
+else
+    notify-send "Binarize error"
+fi
+
+

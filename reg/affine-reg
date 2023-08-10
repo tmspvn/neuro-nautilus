@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Quick affine registration
+# Fixed image : first selection
+# Moving image : Second selection
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path=$(dirname "${MAPFILE[0]}")
+file=$(basename "${MAPFILE[0]}")
+notify-send "Affine registration"
+rand=$(echo $RANDOM | md5sum | head -c 5)
+xterm -e bash -c "antsRegistrationSyNQuick.sh -d 3 -t 'a' -f ${MAPFILE[0]} -m ${MAPFILE[1]} -o ${path}/coreg.${rand}. -n 3"
+
+echo "Registration ID: $rand" >> ${path}/coreg.${rand}.details
+echo "Fixed img: ${MAPFILE[0]}" >> ${path}/coreg.${rand}.details
+echo "Moving img: ${MAPFILE[1]}" >> ${path}/coreg.${rand}.details
+echo "Call:" >> ${path}/coreg.${rand}.details
+echo "antsRegistrationSyNQuick.sh -d 3 -t 'a' -f ${MAPFILE[0]} -m ${MAPFILE[1]} -o ${path}/coreg.${rand}. -n 3" >> ${path}/coreg.${rand}.details
+
+notify-send "Done, reg ID:${rand}"

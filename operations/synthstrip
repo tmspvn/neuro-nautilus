@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Run synthstrip
+#
+# Skullstrip file in the same directory of the input file, do not overwrites. Requires sudo to run docker.
+# docker container -> https://hub.docker.com/r/freesurfer/synthstrip
+# Usage:
+#   ~/synthstrip.sh nifti
+# Exalmple:
+#   chmod +x /home/localadmin/Desktop/synthstrip.sh
+#   ~/synthstrip.sh path/to/file/to/skullstrip/mprage.nii.gz
+# Output:
+#   path/to/file/to/skullstrip/mprage_extracted_brain.nii.gz
+#
+#
+
+notify-send "Skullstripping"
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path=$(dirname "${MAPFILE[0]}")
+file=$(basename "${MAPFILE[0]}")
+if [[ $file == *.nii ]]
+then
+    outname="${file/.nii/"_brain.nii"}"
+else
+    outname="${file/.nii.gz/"_brain.nii.gz"}"
+fi
+cp $path/$file /tmp
+sleep 1
+gid=$(id -g)
+uid=$(id -u)
+xterm -e bash -c "echo 'Synthstripping:';echo;sudo docker run --rm -v /tmp:/tmp -u $uid:$gid freesurfer/synthstrip -i /tmp/${file} -o /tmp/${outname}"
+cp /tmp/$outname $path
+sleep 2
+rm /tmp/$file /tmp/$outname
+
+if test -f "$path/$outname"; then
+    notify-send "Done: $outname"
+else
+    notify-send "Skullstripping error"
+fi
+
