@@ -1,5 +1,5 @@
 # neuro-nautilus
-nautilus script for handy nifti manipulations via right click
+nautilus script for handy nifti manipulations via right click. Work also in other file manager of othe rlinux disto. Just find the folder where to place the files.
 
 ### Installation
 1. save the script in: $HOME/.local/share/nautilus/scripts
@@ -8,7 +8,7 @@ nautilus script for handy nifti manipulations via right click
 Requirements:
 1. FSL
 2. ANTs
-3. Python [imageio, numpy,nibabel, scipy.ndimage,matplotlib]
+3. Python [imageio, numpy, nibabel, scipy.ndimage,matplotlib]
 4. docker freesurfer/synthstrip
 
 
