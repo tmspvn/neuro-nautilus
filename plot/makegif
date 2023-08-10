@@ -22,7 +22,7 @@ printf -v imgs "'%s'," "${MAPFILE[@]}"
 imgs="[$imgs]"
 
 ### set defaults
-v=0
+v="sagittal"
 s4d="False"
 r=1
 ra="(1,2)"
@@ -42,45 +42,49 @@ concat=1
 inp=$(zenity \
 	--forms \
 	--title="Make GIF" \
-	--text="Select settings, python style. Leave empty for default." \
-	--add-entry="View ([sagittal],coronal,axial)" \
-	--add-entry="Rewind ([True],False)" \
-	--add-entry="Winsorize 0-100 (list, [1,98])" \
-	--add-entry="Rotate axis (tuple, [1,2])" \
-	--add-entry="Rotate (int, [1])" \
-	--add-entry="Flip (int, [False])" \
+	--text="Select settings:" \
+	--add-combo "View" --combo-values "sagittal|coronal|axial" \
+	--add-combo "Rewind" --combo-values "True|False" \
+	--add-entry="Winsorize 0-100 (list, [[1,98]])" \
+	--add-combo "Rotate axis" --combo-values "(1,2)|(1,3)|(2,1)|(2,3)|(3,1)|(3,2)" \
+	--add-combo "Rotate 90" --combo-values "False|1|2|3" \
+	--add-combo "Flip axis" --combo-values "False|1|2|3" \
 	--add-entry="Slice4D (int, [False])" \
-	--add-entry="Timebar (True,[False])" \
+	--add-combo "Timebar" --combo-values "False|True" \
 	--add-entry="Crosshair (list(x,y), [False])" \
 	--add-entry="Colormap (str, [False])" \
 	--add-entry="Scale (int, [False])" \
-	--add-entry="Crop air (int, [2])" \
-	--add-entry="Indipidendent normalization of volumes (True,[False])" \
+	--add-combo "Crop air" --combo-values "True|False" \
+	--add-combo "Indipidendent normalization of volumes" --combo-values "False|True" \
 	--add-entry="FPS 1-60 (int, [60])" \
-	--add-entry="Concatenate along axis 1-3 (int, [1])" \
+	--add-combo "Concatenate along axis" --combo-values "1|2|3" \
 	)
+echoWarning() {
+    echo -e "$inp"
+}
+	
 readarray -d "|" -t < <(printf '%s' "$inp") # to get rid of \n in MAPFILE[-1]
 # load user input
-if [ -n "${MAPFILE[0]}" ]; then v=${MAPFILE[0]}; fi
-if [ -n "${MAPFILE[1]}" ]; then rw=${MAPFILE[1]}; fi
+if [ "${MAPFILE[0]}" != " " ]; then v=${MAPFILE[0]}; fi
+if [ "${MAPFILE[1]}" != " " ]; then rw=${MAPFILE[1]}; fi
 if [ -n "${MAPFILE[2]}" ]; then w=${MAPFILE[2]}; fi
-if [ -n "${MAPFILE[3]}" ]; then ra=${MAPFILE[3]}; fi
-if [ -n "${MAPFILE[4]}" ]; then r=${MAPFILE[4]}; fi
-if [ -n "${MAPFILE[5]}" ]; then f=${MAPFILE[5]}; fi
+if [ "${MAPFILE[3]}" != " " ]; then ra=${MAPFILE[3]}; fi
+if [ "${MAPFILE[4]}" != " " ]; then r=${MAPFILE[4]}; fi
+if [ "${MAPFILE[5]}" != " " ]; then f=${MAPFILE[5]}; fi
 if [ -n "${MAPFILE[6]}" ]; then s4d=${MAPFILE[6]}; fi
-if [ -n "${MAPFILE[7]}" ]; then t=${MAPFILE[7]}; fi
+if [ "${MAPFILE[7]}" != " " ]; then t=${MAPFILE[7]}; fi
 if [ -n "${MAPFILE[8]}" ]; then c=${MAPFILE[8]}; fi
 if [ -n "${MAPFILE[9]}" ]; then cmap=${MAPFILE[9]}; fi
 if [ -n "${MAPFILE[10]}" ]; then sc=${MAPFILE[10]}; fi
-if [ -n "${MAPFILE[11]}" ]; then crop=${MAPFILE[11]}; fi
-if [ -n "${MAPFILE[12]}" ]; then vwn=${MAPFILE[12]}; fi
+if [ "${MAPFILE[11]}" != " " ]; then crop=${MAPFILE[11]}; fi
+if [ "${MAPFILE[12]}" != " " ]; then vwn=${MAPFILE[12]}; fi
 if [ -n "${MAPFILE[13]}" ]; then fps=${MAPFILE[13]}; fi
-if [ -n "${MAPFILE[14]}" ]; then concat=${MAPFILE[14]}; fi
+if [ "${MAPFILE[14]}" != " " ]; then concat=${MAPFILE[14]}; fi
 
 # make gif
 notify-send "Generating gif."
 SCRIPT_DIR=$(dirname $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ))
-python3 -c "import sys; sys.path.append('${SCRIPT_DIR}/lib'); from neuronautilus_mkgif import mkgif; mkgif($imgs, path='$path/$outname', view=$v, slice4d=$s4d, rotate=$r, rotaxes=$ra, flip=$f, rewind=$rw, winsorize=$w, timebar=$t, crosshair=$c, scale=$sc, crop=$crop, vol_wise_norm=$vwn, fps=$fps, concat_along=${concat}, cmap=$cmap )"
+python3 -c "import sys; sys.path.append('${SCRIPT_DIR}/lib'); from neuronautilus_mkgif import mkgif; mkgif($imgs, path='$path/$outname', view='$v', slice4d=$s4d, rotate=$r, rotaxes=$ra, flip=$f, rewind=$rw, winsorize=$w, timebar=$t, crosshair=$c, scale=$sc, crop=$crop, vol_wise_norm=$vwn, fps=$fps, concat_along=${concat}, cmap=$cmap )"
 
 if test -f "${path}/$outname"; then
     notify-send "Done: $outname"
