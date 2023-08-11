@@ -1,0 +1,3 @@
+#!/bin/bash
+notify-send "still under construction"
+zenity --text-info --title="Background Reading" --html --url="https://developer.gnome.org"

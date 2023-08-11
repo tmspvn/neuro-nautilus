@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# resample volume
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path="$(dirname "${MAPFILE[0]}")"
+file=$(basename "${MAPFILE[0]}")
+hd=$(fslhd ${MAPFILE[0]})
+if [[ $file == *.nii ]]
+then
+    outname="${file/.nii/"_resampled.nii"}"
+else
+    outname="${file/.nii.gz/"_resampled.nii.gz"}"
+fi
+
+fdim=$(sed "5q;d" <<< $hd)
+fdim=$(echo "${fdim: -1}")
+
+#defaults
+SoS=1
+interpol=0
+pt=6
+
+info="Filename: ${file}\n \
+$(sed "6q;d" <<< $hd) | $(sed "19q;d" <<< $hd)\n\
+$(sed "7q;d" <<< $hd) | $(sed "20q;d" <<< $hd)\n\
+$(sed "8q;d" <<< $hd) | $(sed "21q;d" <<< $hd)\n\
+$(sed "9q;d" <<< $hd) | $(sed "22q;d" <<< $hd)\n"
+
+inp=$(zenity \
+	--forms \
+	--title="Resample image" \
+	--text="${info}\nSelect settings:" \
+	--add-entry="X" \
+	--add-entry="Y" \
+	--add-entry="Z" \
+	--add-combo "Feature" --combo-values "dimension|spacing" \
+	--add-combo "Interpolation" --combo-values "linear|nn|spline" \
+	--add-combo "Voxel type" --combo-values "float|integer" \
+	)
+
+readarray -d "|" -t < <(printf '%s' "$inp")
+# load user input
+if [ -n "${MAPFILE[0]}" ]; then x=${MAPFILE[0]}; fi
+if [ -n "${MAPFILE[1]}" ]; then y=${MAPFILE[1]}; fi
+if [ -n "${MAPFILE[2]}" ]; then z=${MAPFILE[2]}; fi
+if [ "${MAPFILE[3]}" = "spacing" ]; then SoS=0}; fi
+if [ "${MAPFILE[4]}" = "nn" ]; then interpol=1; fi
+if [ "${MAPFILE[4]}" = "spline" ]; then interpol=4; fi
+if [ "${MAPFILE[5]}" = "integer" ]; then pt=4; fi
+
+ResampleImage $fdims $path/$file $path/$outname ${x}x${y}x${z} $SoS $interpol $pt
+
+if test -f "${outname}"; then
+    notify-send "Done: $outname"
+else
+    notify-send "Resample error"
+fi
+
+
+

@@ -39,11 +39,10 @@ readarray -d "|" -t <<< ${exprs}
 exprs=${MAPFILE[0]}
 outname=${MAPFILE[1]}
 if [ -z $outname ]; then outname="result.nii.gz"; fi
-	
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-python3 $SCRIPT_DIR/lib/neuronautilus_evalexprs.py -ex $exprs -o ${path}/$outname -vars $FILESET
+python3 $SCRIPT_DIR/lib/neuronautilus_evalexprs.py -ex "$exprs" -o ${path}/${outname} -vars $FILESET
 
-if test -f "${path}/$outname"; then
+if [[ -f "$outname" ]]; then
     notify-send "Done: $outname"
 else
     notify-send "math error"
