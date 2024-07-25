@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Quick apply transform
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path=$(dirname "${MAPFILE[0]}")
+file=$(basename "${MAPFILE[0]}")
+mov=${MAPFILE[0]}
+
+if [[ $file == *.nii ]]
+then
+    outname="${file/.nii/".newspace.nii"}"
+else
+    outname="${file/.nii.gz/".newspace.nii.gz"}"
+fi
+
+ref=$(zenity --file-selection --title="Select a reference image")
+xfm=$(zenity --file-selection --multiple --title="Select a transforms in order")
+readarray -d "|" -t <<< ${xfm}
+printf -v xfm " -t %s" "${MAPFILE[@]}"
+
+notify-send "Apply transform"
+xterm -e bash -c "antsApplyTransforms -i $mov -r $ref -o $path/$outname [$xfm,1]"
+#echo "antsApplyTransforms -i $mov -r $ref -o $path/$outname" >> newspace.details
+notify-send "Done: $path/$outname"
+
