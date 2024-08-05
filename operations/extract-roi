@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# extract volume
+#
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+DIR="$(dirname "${MAPFILE[0]}")"
+
+val=$(zenity --entry --title="Extract one roi" --text="ROI index:")
+val_minus=$(echo "$val - 0.000000001" | bc)
+val_plus=$(echo "$val + 0.000000001" | bc)
+fslmaths ${MAPFILE[0]} -thr $val_minus -uthr $val_plus $DIR/roi.$val.nii.gz
+fslmaths $DIR/roi.$val.nii.gz -bin $DIR/roi.$val.nii.gz
+
+notify-send "Extracting"
+if test -f "$DIR/roi.$val.nii.gz"; then
+    notify-send "ROI $val extracted."
+else
+    notify-send "ROI extraction error"
+fi
+
+
+
