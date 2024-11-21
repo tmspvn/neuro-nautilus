@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Quick non linear registration
+# Fixed image : first selection
+# Moving image : second selection
+
+readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+path=$(dirname "${MAPFILE[0]}")
+file=$(basename "${MAPFILE[0]}")
+notify-send "Nonlin Registration"
+rand=$(echo $RANDOM | md5sum | head -c 5)
+mkdir ${path}/coreg.${rand}
+path=${path}/coreg.${rand}
+xterm -e bash -c "antsRegistrationSyN.sh -d 3 -f ${MAPFILE[0]} -m ${MAPFILE[1]} -o ${path}/coreg.${rand}. -n 3"
+#
+echo "Registration ID: $rand" >> ${path}/coreg.${rand}.details
+echo "Fixed img: ${MAPFILE[0]}" >> ${path}/coreg.${rand}.details
+echo "Moving img: ${MAPFILE[1]}" >> ${path}/coreg.${rand}.details
+echo "Call:" >> ${path}/coreg.${rand}.details
+echo " " >> ${path}/coreg.${rand}.details
+
+echo "Apply transform DIRECT Mov -> Fix: $(basename "${MAPFILE[1]}")  ->  $(basename "${MAPFILE[0]}") " >> ${path}/coreg.${rand}.details
+echo "antsApplyTransforms -d 3 -i ${MAPFILE[1]} -r ${MAPFILE[0]} -o ${path}/coreg.${rand}.ApplyWarp.Mov_to_Fixed.nii.gz -t ${path}/coreg.${rand}.0GenericAffine.mat -t ${path}/coreg.${rand}.1Warp.nii.gz" >> ${path}/coreg.${rand}.details
+
+echo " " >> ${path}/coreg.${rand}.details
+
+echo "Apply transform INVERSE Fix -> Mov: $(basename "${MAPFILE[0]}")  ->  $(basename "${MAPFILE[1]}") " >> ${path}/coreg.${rand}.details
+echo "antsApplyTransforms -d 3 -i ${MAPFILE[0]} -r ${MAPFILE[1]} -o ${path}/coreg.${rand}.ApplyINVWarp.Fixed_to_Moving.nii.gz -t [${path}/coreg.${rand}.0GenericAffine.mat,1] -t ${path}/coreg.${rand}.1InverseWarp.nii.gz" >> ${path}/coreg.${rand}.details
+
+notify-send "Done, reg ID:${rand}"
+
