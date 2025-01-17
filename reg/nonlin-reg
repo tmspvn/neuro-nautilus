@@ -20,7 +20,7 @@ echo "Call:" >> ${path}/coreg.${rand}.details
 echo " " >> ${path}/coreg.${rand}.details
 
 echo "Apply transform DIRECT Mov -> Fix: $(basename "${MAPFILE[1]}")  ->  $(basename "${MAPFILE[0]}") " >> ${path}/coreg.${rand}.details
-echo "antsApplyTransforms -d 3 -i ${MAPFILE[1]} -r ${MAPFILE[0]} -o ${path}/coreg.${rand}.ApplyWarp.Mov_to_Fixed.nii.gz -t ${path}/coreg.${rand}.0GenericAffine.mat -t ${path}/coreg.${rand}.1Warp.nii.gz" >> ${path}/coreg.${rand}.details
+echo "antsApplyTransforms -d 3 -i ${MAPFILE[1]} -r ${MAPFILE[0]} -o ${path}/coreg.${rand}.ApplyWarp.Mov_to_Fixed.nii.gz -t ${path}/coreg.${rand}.1Warp.nii.gz -t ${path}/coreg.${rand}.0GenericAffine.mat " >> ${path}/coreg.${rand}.details
 
 echo " " >> ${path}/coreg.${rand}.details
 
