@@ -18,6 +18,7 @@ fi
 unset MAPFILE[-1]
 printf -v FILESET " %s" "${MAPFILE[@]}"
 CHARSET=({a..z})
+
 # loop in the array and ad dprefix for ID
 ## now loop through the above array
 for i in "${!MAPFILE[@]}"; do
@@ -40,12 +41,21 @@ exprs=${MAPFILE[0]}
 outname=${MAPFILE[1]}
 if [ -z $outname ]; then outname="result.nii.gz"; fi
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-python3 $SCRIPT_DIR/lib/neuronautilus_evalexprs.py -ex "$exprs" -o ${path}/${outname} -vars $FILESET
 
-if [[ -f "$outname" ]]; then
+
+# Execute the Python script and capture its output and error
+#python3 $SCRIPT_DIR/lib/neuronautilus_evalexprs.py -ex "$exprs" -o ${path}/${outname} -vars $FILESET
+py_output=$(python3 "$SCRIPT_DIR/lib/neuronautilus_evalexprs.py" -ex "$exprs" -o "${path}/${outname}" -vars $FILESET 2>&1)
+
+
+if [[ -f "${path}/${outname}" ]]; then
     notify-send "Done: $outname"
 else
-    notify-send "math error"
+# Check exit code of the Python script
+if [ $? -ne 0 ]; then
+    # Display error in xterm
+    xterm -hold -e "bash -c 'echo Error occurred:; echo \"$py_output\"'"
+fi
 fi
 
 
