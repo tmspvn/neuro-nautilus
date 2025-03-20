@@ -4,24 +4,24 @@
 #	nautilus -q
 #	nautilus --no-desktop
 
-readarray -t <<<${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+# Read selected file paths from Nautilus (MAPFILE is the default variable)
+readarray -t <<< "${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}"
 
-# get paths, basename first image to get fname for output gif
+# Get path and filename of the first image to construct the output GIF name
 path="$(dirname "${MAPFILE[0]}")"
 file=$(basename "${MAPFILE[0]}")
-if [[ $file == *.nii ]]
-then
-    outname="${file/.nii/".gif"}"
+if [[ $file == *.nii ]]; then
+    outname="${file/.nii/.gif}"
 else
-    outname="${file/.nii.gz/".gif"}"
+    outname="${file/.nii.gz/.gif}"
 fi
 
-# built input list from selected files & remove last empty element
+# Build input list from selected files & remove the last empty element
 unset MAPFILE[-1]
 printf -v imgs "'%s'," "${MAPFILE[@]}"
 imgs="[$imgs]"
 
-### set defaults
+### Set default settings
 v="sagittal"
 s4d="False"
 r=1
@@ -38,7 +38,8 @@ vwn="False"
 fps=25
 concat=1
 
-# prompt user with options
+# Prompt user with options using zenity.
+# Store the input in a variable and split it into an array called 'settings'
 inp=$(zenity \
 	--forms \
 	--title="Make GIF" \
@@ -55,77 +56,73 @@ inp=$(zenity \
 	--add-entry="Colormap (str, [False])" \
 	--add-entry="Scale (int, [False])" \
 	--add-combo "Crop air" --combo-values "True|False" \
-	--add-combo "Indipidendent normalization of volumes" --combo-values "False|True" \
+	--add-combo "Independent normalization of volumes" --combo-values "False|True" \
 	--add-entry="FPS 1-60 (int, [60])" \
 	--add-combo "Concatenate along axis" --combo-values "1|2|3" \
-	)
+)
 
-readarray -d "|" -t < <(printf '%s' "$inp") # to get rid of \n in MAPFILE[-1]
-# load user input
-if [ "${MAPFILE[0]}" != " " ]; then v=${MAPFILE[0]}; fi
-if [ "${MAPFILE[1]}" != " " ]; then rw=${MAPFILE[1]}; fi
-if [ -n "${MAPFILE[2]}" ]; then w=${MAPFILE[2]}; fi
-if [ "${MAPFILE[3]}" != " " ]; then ra=${MAPFILE[3]}; fi
-if [ "${MAPFILE[4]}" != " " ]; then r=${MAPFILE[4]}; fi
-if [ "${MAPFILE[5]}" != " " ]; then f=${MAPFILE[5]}; fi
-if [ -n "${MAPFILE[6]}" ]; then s4d=${MAPFILE[6]}; fi
-if [ "${MAPFILE[7]}" != " " ]; then t=${MAPFILE[7]}; fi
-if [ -n "${MAPFILE[8]}" ]; then c=${MAPFILE[8]}; fi
-if [ -n "${MAPFILE[9]}" ]; then cmap=${MAPFILE[9]}; fi
-if [ -n "${MAPFILE[10]}" ]; then sc=${MAPFILE[10]}; fi
-if [ "${MAPFILE[11]}" != " " ]; then crop=${MAPFILE[11]}; fi
-if [ "${MAPFILE[12]}" != " " ]; then vwn=${MAPFILE[12]}; fi
-if [ -n "${MAPFILE[13]}" ]; then fps=${MAPFILE[13]}; fi
-if [ "${MAPFILE[14]}" != " " ]; then concat=${MAPFILE[14]}; fi
+IFS="|" read -r -a settings <<< "$inp"
 
+# Override defaults if user input is provided
+[ -n "${settings[0]}" ] && v=${settings[0]}
+[ -n "${settings[1]}" ] && rw=${settings[1]}
+[ -n "${settings[2]}" ] && w=${settings[2]}
+[ -n "${settings[3]}" ] && ra=${settings[3]}
+[ -n "${settings[4]}" ] && r=${settings[4]}
+[ -n "${settings[5]}" ] && f=${settings[5]}
+[ -n "${settings[6]}" ] && s4d=${settings[6]}
+[ -n "${settings[7]}" ] && t=${settings[7]}
+[ -n "${settings[8]}" ] && c=${settings[8]}
+[ -n "${settings[9]}" ] && cmap=${settings[9]}
+[ -n "${settings[10]}" ] && sc=${settings[10]}
+[ -n "${settings[11]}" ] && crop=${settings[11]}
+[ -n "${settings[12]}" ] && vwn=${settings[12]}
+[ -n "${settings[13]}" ] && fps=${settings[13]}
+[ -n "${settings[14]}" ] && concat=${settings[14]}
 
-
-# make gif
+# Notify user that GIF generation is starting
 notify-send "Generating gif."
-SCRIPT_DIR=$(dirname $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ))
 
+# Determine the script directory
+SCRIPT_DIR=$(dirname "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )")
+
+# Run the Python script to generate the GIF and capture any error output
 py_script=$(python3 -c "
 import sys
-sys.path.append('/home/localadmin/.local/share/nautilus/scripts/lib')
+sys.path.append('${SCRIPT_DIR}/lib')
 from neuronautilus_mkgif import mkgif
 
 try:
     mkgif(
-        ['/home/localadmin/Downloads/nexi_t_ex_ribbon_dilated.nii.gz'],
-        path='/home/localadmin/Downloads/nexi_t_ex_ribbon_dilated.gif',
-        view='sagittal',
-        slice4d=False,
-        rotate=False,
-        rotaxes=(1,2),
-        flip=False,
-        rewind=True,
-        winsorize=[1,98],
-        timebar=False,
-        crosshair=False,
-        scale=2,
-        crop=True,
-        vol_wise_norm=False,
-        fps=25,
-        concat_along=1,
-        cmap=False
+        ${imgs},
+        path='${path}/${outname}',
+        view='${v}',
+        slice4d=${s4d},
+        rotate=${r},
+        rotaxes=${ra},
+        flip=${f},
+        rewind=${rw},
+        winsorize=${w},
+        timebar=${t},
+        crosshair=${c},
+        scale=${sc},
+        crop=${crop},
+        vol_wise_norm=${vwn},
+        fps=${fps},
+        concat_along=${concat},
+        cmap='${cmap}'
     )
     sys.exit(0)
 except Exception as e:
-    print(f'{e}', file=sys.stderr)
+    print(f'Error: {e}', file=sys.stderr)
     sys.exit(1)
-")
+" 2>&1)
 
-
-#py_output=$(python3 -c "import sys; sys.path.append('${SCRIPT_DIR}/lib'); from neuronautilus_mkgif import mkgif; try: mkgif($imgs, path='$path/$outname', view='$v', slice4d=$s4d, rotate=$r, rotaxes=$ra, flip=$f, rewind=$rw, winsorize=$w, timebar=$t, crosshair=$c, scale=$sc, crop=$crop, vol_wise_norm=$vwn, fps=$fps, concat_along=${concat}, cmap=$cmap ); sys.exit(0); except Exception as e: print(f'{e}', file=sys.stderr); sys.exit(1)"  2>&1)
-
-if test -f "${path}/$outname"; then
-    notify-send "Done: $outname"
+# Check if the output GIF was created; if not, show the error in xterm
+if test -f "${path}/${outname}"; then
+    notify-send "Done: ${outname}"
 else
-# Check exit code of the Python script
-if [ $? -ne 0 ]; then
-    # Display error in xterm
-    xterm -hold -e "bash -c 'echo Error occurred:; echo \"$py_output\"'"
+    if [ $? -ne 0 ]; then
+        xterm -hold -e "bash -c 'echo Error occurred:; echo \"${py_script}\"'"
+    fi
 fi
-fi
-
-

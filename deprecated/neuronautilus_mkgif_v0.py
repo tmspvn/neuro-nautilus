@@ -119,12 +119,10 @@ def mkgif(img, path=False, view=0, slice4d=False, rotate=False, rotaxes=(1, 2), 
             img = np.concatenate([img, np.flip(img, axis=0)], axis=0)
 
         # set cmap
-        if cmap != 'False':
+        if isinstance(cmap, str):
             cmap = plt.get_cmap(cmap)
-            img_float = img.astype(np.float32) / 255.0  # now in [0,1]
-            colored = cmap(img_float)
-            colored = (colored[..., :3] * 255).astype(np.uint8)
-            img = colored
+            # return warning 'Convert image to uint8 prior to saving' but if cast it breaks
+            img = cmap(img.astype(np.uint8))
         else:
             img = img.astype(np.uint8)
 
