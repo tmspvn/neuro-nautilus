@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# compare headers
+#
+
+readarray -t <<< ${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS}
+
+# built input python list from selected files & remove last empty element
+unset MAPFILE[-1]
+printf -v FILESET " %s" "${MAPFILE[@]}"
+# Get this script location
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# Remove one level on the directory
+SCRIPT_DIR=$(dirname "${SCRIPT_DIR}") # 
+# Execute the Python script and capture its output and error
+py_output=$(python3 "$SCRIPT_DIR/lib/neuronautilus_compare_headers.py" -vars $FILESET 2>&1)
+xterm -hold -maximized -e "echo \"$py_output\""
+
+

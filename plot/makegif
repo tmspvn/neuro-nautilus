@@ -78,15 +78,54 @@ if [ "${MAPFILE[12]}" != " " ]; then vwn=${MAPFILE[12]}; fi
 if [ -n "${MAPFILE[13]}" ]; then fps=${MAPFILE[13]}; fi
 if [ "${MAPFILE[14]}" != " " ]; then concat=${MAPFILE[14]}; fi
 
+
+
 # make gif
 notify-send "Generating gif."
 SCRIPT_DIR=$(dirname $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ))
-python3 -c "import sys; sys.path.append('${SCRIPT_DIR}/lib'); from neuronautilus_mkgif import mkgif; mkgif($imgs, path='$path/$outname', view='$v', slice4d=$s4d, rotate=$r, rotaxes=$ra, flip=$f, rewind=$rw, winsorize=$w, timebar=$t, crosshair=$c, scale=$sc, crop=$crop, vol_wise_norm=$vwn, fps=$fps, concat_along=${concat}, cmap=$cmap )"
+
+py_script=$(python3 -c "
+import sys
+sys.path.append('/home/localadmin/.local/share/nautilus/scripts/lib')
+from neuronautilus_mkgif import mkgif
+
+try:
+    mkgif(
+        ['/home/localadmin/Downloads/nexi_t_ex_ribbon_dilated.nii.gz'],
+        path='/home/localadmin/Downloads/nexi_t_ex_ribbon_dilated.gif',
+        view='sagittal',
+        slice4d=False,
+        rotate=False,
+        rotaxes=(1,2),
+        flip=False,
+        rewind=True,
+        winsorize=[1,98],
+        timebar=False,
+        crosshair=False,
+        scale=2,
+        crop=True,
+        vol_wise_norm=False,
+        fps=25,
+        concat_along=1,
+        cmap=False
+    )
+    sys.exit(0)
+except Exception as e:
+    print(f'{e}', file=sys.stderr)
+    sys.exit(1)
+")
+
+
+#py_output=$(python3 -c "import sys; sys.path.append('${SCRIPT_DIR}/lib'); from neuronautilus_mkgif import mkgif; try: mkgif($imgs, path='$path/$outname', view='$v', slice4d=$s4d, rotate=$r, rotaxes=$ra, flip=$f, rewind=$rw, winsorize=$w, timebar=$t, crosshair=$c, scale=$sc, crop=$crop, vol_wise_norm=$vwn, fps=$fps, concat_along=${concat}, cmap=$cmap ); sys.exit(0); except Exception as e: print(f'{e}', file=sys.stderr); sys.exit(1)"  2>&1)
 
 if test -f "${path}/$outname"; then
     notify-send "Done: $outname"
 else
-    notify-send "Mkgif error"
+# Check exit code of the Python script
+if [ $? -ne 0 ]; then
+    # Display error in xterm
+    xterm -hold -e "bash -c 'echo Error occurred:; echo \"$py_output\"'"
+fi
 fi
 
 
